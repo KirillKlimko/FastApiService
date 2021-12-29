@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, String, Integer, DateTime
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 
 from config import settings
@@ -18,7 +18,7 @@ class User(Base):
     password = Column(String)
     created_at = Column(DateTime, default=None)
 
-    user = relationship('MeetingUsers', backref='user')
+    user = relationship('MeetingUsers', backref='user', lazy=True)
 
     def verify_password(self, password):
         return settings.pwd_context.verify(password, self.password)

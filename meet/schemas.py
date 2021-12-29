@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import date, time, datetime
 from typing import List, Optional, Union
 
 from pydantic import BaseModel
@@ -19,11 +19,17 @@ class MeetCreate(MeetBase):
     date: date
     hour: int
     minute: Optional[int] = 0
+    hour_until_notification: Optional[int] = 1
+    notification: Optional[bool] = True
     users_add: List[Union[int, str]] = []
 
     @property
     def get_time(self):
         return time(self.hour, self.minute)
+
+    @property
+    def get_date(self):
+        return datetime.combine(self.date, self.get_time)
 
 
 class MeetUpdate(MeetCreate):

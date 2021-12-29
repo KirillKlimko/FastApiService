@@ -21,7 +21,7 @@ def create_meet_for_user(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(users.get_current_user),
 ):
-    return crud.create_user_meet(db=db, meet=meet, user_id=current_user.id)
+    return crud.create_user_meet(db=db, meet=meet, user=current_user)
 
 
 @router.post('/update/')

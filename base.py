@@ -1,3 +1,3 @@
 from db import Base
-from meet.models import MeetingUsers, Meet
-from user.models import User
+from meet.models import Meet
+from user.models import User, MeetingUsers

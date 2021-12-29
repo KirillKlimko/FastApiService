@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from typing import Optional, Union
 
 from fastapi import HTTPException
@@ -8,6 +8,7 @@ from starlette import status
 
 from user.models import User
 from user.crud import get_user, get_user_by_email
+from worker import send_mail_task
 from . import models, schemas
 
 
@@ -86,8 +87,8 @@ def get_meets(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Meet).offset(skip).limit(limit).all()
 
 
-def create_user_meet(db: Session, meet: schemas.MeetCreate, user_id: int):
-    current_meet = get_current_meet(db, title=meet.title, user_id=user_id)
+def create_user_meet(db: Session, meet: schemas.MeetCreate, user: User):
+    current_meet = get_current_meet(db, title=meet.title, user_id=user.id)
     if current_meet:
         return HTTPException(
             status_code=status.HTTP_200_OK,
@@ -95,12 +96,27 @@ def create_user_meet(db: Session, meet: schemas.MeetCreate, user_id: int):
         )
     db_meet = models.Meet(
         title=meet.title,
-        owner_id=user_id,
+        owner_id=user.id,
         created_at=datetime.now(),
-        meeting_time=datetime.combine(meet.date, meet.get_time),
+        meeting_time=meet.get_date,
     )
     db.add(db_meet)
     db.commit()
+    if meet.notification:
+        notification_date = meet.get_date - (
+            timedelta(hours=meet.hour_until_notification) + timedelta(hours=3)
+        )
+        send_mail_task.apply_async(
+            (
+                user.email,
+                meet.hour,
+                meet.hour_until_notification,
+                user.first_name,
+                user.last_name,
+                meet.title,
+            ),
+            eta=notification_date,
+        )
     add_users_for_meet(db, meet=meet, current_meet=db_meet)
     return HTTPException(
         status_code=status.HTTP_201_CREATED, detail='Meeting created'

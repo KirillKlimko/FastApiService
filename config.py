@@ -15,6 +15,12 @@ class Settings(BaseSettings):
         ..., env='ACCESS_TOKEN_EXPIRE_MINUTES'
     )
 
+    CELERY_BROKER_URL: str = Field(..., env='CELERY_BROKER_URL')
+    CELERY_RESULT_BACKEND: str = Field(..., env='CELERY_RESULT_BACKEND')
+
+    GMAIL: str = Field(..., env='GMAIL')
+    GMAIL_PASSWORD: str = Field(..., env='GMAIL_PASSWORD')
+
     @property
     def database_url(self):
         return f'postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}/{self.DB_NAME}'
