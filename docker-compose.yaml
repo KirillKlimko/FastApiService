@@ -1,0 +1,40 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:13-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    expose:
+      - 5432
+    environment:
+      - POSTGRES_USER=kirill
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=service_fastapi
+  redis:
+    image: redis:alpine
+    restart: always
+    ports:
+      - 6379:6379
+  web:
+    build:
+      context: .
+    volumes:
+          - .:/app
+    command: bash -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    environment:
+      - DATABASE_URL=postgresql://kirill:password@db:5432/service_fastapi
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+      - redis
+  worker:
+    build:
+      context: .
+    volumes:
+      - .:/app
+    command: celery --app=worker.celery worker -l INFO
+    depends_on:
+      - redis
+volumes:
+  postgres_data:
